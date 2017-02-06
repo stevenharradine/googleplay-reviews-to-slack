@@ -1,7 +1,8 @@
 fs = require('fs')
 https = require("https")
+cheerio = require('cheerio')
 
-const useStubbedResponse = false;
+const useStubbedResponse = true;
 var html;
 var google_play_id = process.argv[2]
 
@@ -36,5 +37,20 @@ if (useStubbedResponse) {
 }
 
 function processDOM (dom) {
-	console.log (dom);
+	$ = cheerio.load(dom)
+	var reviews = $('.single-review')
+
+
+
+	reviews.each (function (index, element) {
+		name = $(element).find(".author-name").text().trim()
+		date = $(element).find(".review-date").text().trim()
+		stars = $(element).find(".star-rating-non-editable-container").attr("aria-label").trim()
+		review = $(element).find(".review-body").text().trim()
+
+		console.log (name + "(" + date + ")")
+		console.log (stars)
+		console.log (review.replace("Full Review", ""))
+		console.log ()
+	})
 }
