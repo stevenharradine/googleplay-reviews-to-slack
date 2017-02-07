@@ -52,7 +52,13 @@ function processDOM (dom) {
 
 	var new_json =  {}
 	    new_json.data = []
-	var existing_json = JSON.parse(fs.readFileSync(google_play_id + '.json', 'utf8'));
+
+	if (fs.existsSync(google_play_id + '.json')) {
+		existing_json = JSON.parse(fs.readFileSync(google_play_id + '.json', 'utf8'));
+	} else {
+		existing_json = {}
+		existing_json.data = []
+	}
 
 	reviews.each (function (index, element) {
 		var isFound = false;
