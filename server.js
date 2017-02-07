@@ -4,7 +4,6 @@ cheerio = require('cheerio')
 Slack = require('slack-node')
 
 const useStubbedResponse = true;
-var html;
 
 var google_play_id = process.argv[2]
 var slack_token = process.argv[3];
