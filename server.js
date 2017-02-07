@@ -3,7 +3,7 @@ https = require("https")
 cheerio = require('cheerio')
 Slack = require('slack-node')
 
-const useStubbedResponse = true;
+const useStubbedResponse = false;
 
 var google_play_id = process.argv[2]
 var slack_token = process.argv[3];
