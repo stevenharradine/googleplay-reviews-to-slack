@@ -1,10 +1,18 @@
 fs = require('fs')
 https = require("https")
 cheerio = require('cheerio')
+Slack = require('slack-node')
 
 const useStubbedResponse = true;
 var html;
+
 var google_play_id = process.argv[2]
+var slack_token = process.argv[3];
+var slack_channel = process.argv[4];
+
+webhookUri = "https://hooks.slack.com/services/" + slack_token;
+slack = new Slack();
+slack.setWebhook(webhookUri);
 
 if (useStubbedResponse) {
 	fs.readFile(google_play_id + '.stub', 'utf8', function (err,data) {
@@ -53,11 +61,11 @@ function processDOM (dom) {
 		name = cleanData ($(element).find(".author-name").text())
 		date = cleanData ($(element).find(".review-date").text())
 		stars = cleanData ($(element).find(".star-rating-non-editable-container").attr("aria-label"))
-		review = cleanData ($(element).find(".review-body").text())
+		review = cleanData ($(element).find(".review-body").text()).replaceAll ("Full Review", "")
 
 		// does the record exisit
 		for (var i = 0; i < existing_json.data.length; i++) {
-			if (existing_json.data[i].name == name && existing_json.data[i].date == date) {
+			if (existing_json.data[i].name == name && existing_json.data[i].date == date && existing_json.data[i].review == review) {
 				isFound = true
 			}
 	 	}
@@ -75,9 +83,14 @@ function processDOM (dom) {
 		}
 	})
 	
-	// add new records to the existing records
+	// add new records to the existing records and notify slack
 	for (var i = 0; i < new_json.data.length; i++) {
-		console.log (existing_json.data.push (new_json.data[i]))
+		existing_json.data.push (new_json.data[i])
+
+        send_to_slack (
+            "name: " + new_json.data[i].name + "\ndate: " + new_json.data[i].date + "\nstars: " + new_json.data[i].stars + "\nreview: ```" + new_json.data[i].review + "```",
+            function (err, response) {}
+        )
 	}
 
 	fs.writeFile(google_play_id + '.json', JSON.stringify(existing_json), function(err) {
@@ -93,3 +106,19 @@ String.prototype.replaceAll = function(search, replacement) {
     var target = this;
     return target.split(search).join(replacement);
 };
+
+function send_to_slack (text, call_back) {
+    slack.webhook({
+      channel: slack_channel,
+      username: "AndroidReviewBot",
+      text: text
+    }, function(err, response) {
+        if (err) {
+            console.log (err);
+        } else {
+            console.log(response);
+        }
+
+        call_back(err, response);
+    });
+}
